@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Define log file location
+LOG_FILE="/var/log/driver_checker.log"
+
+# Function to check eligibility
+check_eligibility() {
+    local name=$1
+    local age=$2
+    local vision_rate=$3
+    if [ "$age" -ge 18 ] && [ "$vision_rate" -ge 4 ]; then
+        echo "$name:eligible"
+        echo "$name:$age:$vision_rate:eligible" >> "$LOG_FILE"
+    else
+        echo "$name:not eligible"
+        echo "$name:$age:$vision_rate:not eligible" >> "$LOG_FILE"
+    fi
+}
+
+# Check argument
+if [ "$1" == "new" ]; then
+    # Collect data for the "new" user
+    read -p "Enter your name: " name
+    read -p "Enter your age: " age
+    read -p "Enter your vision rate (1-6): " vision_rate
+    check_eligibility "$name" "$age" "$vision_rate"
+
+elif [ "$1" == "get" ]; then
+    # Collect name for the "get" action
+    read -p "Enter the name of the user you want to check: " user_name
+    result=$(grep "^$user_name:" "$LOG_FILE" | tail -n 1 | cut -d':' -f4)
+    if [ -z "$result" ]; then
+        echo "$user_name: no result found"
+    else
+        echo "$user_name:$result"
+    fi
+
+elif [ "$1" == "list" ]; then
+    # Show all results for the "list" action
+    echo "Listing all users and their eligibility results:"
+    grep -o '^[^:]*:[^:]*:[^:]*:[^:]*' "$LOG_FILE"
+
+else
+    echo "Invalid argument. Please use one of the following: new, get, list."
+    exit 1
+fi
